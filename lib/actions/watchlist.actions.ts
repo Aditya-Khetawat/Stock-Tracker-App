@@ -4,14 +4,13 @@ import { connectToDatabase } from "@/database/mongoose";
 import { Watchlist } from "@/database/models/watchlist.model";
 import { auth } from "@/lib/better-auth/auth";
 import { headers } from "next/headers";
-import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
 const getAuthenticatedUser = async () => {
   const session = await auth.api.getSession({ headers: await headers() });
 
   if (!session?.user) {
-    redirect("/sign-in");
+    return null;
   }
 
   return session.user;
@@ -26,6 +25,13 @@ export async function addToWatchlist({
 }) {
   try {
     const user = await getAuthenticatedUser();
+
+    if (!user) {
+      return {
+        success: false,
+        error: "Please sign in to add stocks to your watchlist.",
+      };
+    }
 
     const normalizedSymbol = symbol?.trim().toUpperCase();
     const normalizedCompany = company?.trim();
@@ -67,6 +73,14 @@ export async function addToWatchlist({
 export async function removeFromWatchlist(symbol: string) {
   try {
     const user = await getAuthenticatedUser();
+
+    if (!user) {
+      return {
+        success: false,
+        error: "Please sign in to remove stocks from your watchlist.",
+      };
+    }
+
     const normalizedSymbol = symbol?.trim().toUpperCase();
 
     if (!normalizedSymbol) {
@@ -97,6 +111,10 @@ export async function getUserWatchlist() {
   try {
     const user = await getAuthenticatedUser();
 
+    if (!user) {
+      return [];
+    }
+
     await connectToDatabase();
 
     const items = await Watchlist.find({ userId: user.id })
@@ -117,6 +135,10 @@ export async function getUserWatchlist() {
 export async function getWatchlistWithData(): Promise<StockWithData[]> {
   try {
     const user = await getAuthenticatedUser();
+
+    if (!user) {
+      return [];
+    }
 
     await connectToDatabase();
 
