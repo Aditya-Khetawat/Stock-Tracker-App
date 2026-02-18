@@ -104,7 +104,7 @@ export const WELCOME_EMAIL_TEMPLATE = `<!DOCTYPE html>
                     <!-- Dashboard Preview Image -->
                     <tr>
                         <td align="center" class="dashboard-preview" style="padding: 40px 40px 0px 40px;">
-                            <img src="https://raw.githubusercontent.com/Aditya-Khetawat/Stock-Tracker-App/refs/heads/main/public/assets/images/logo.png" alt="StockLens Dashboard Preview" width="100%" style="max-width: 520px; width: 100%; height: auto; border-radius: 12px; border: 1px solid #30333A;">
+                            <img src="https://raw.githubusercontent.com/Aditya-Khetawat/Stock-Tracker-App/refs/heads/main/public/assets/images/dashboard-preview.png" alt="StockLens Dashboard Preview" width="100%" style="max-width: 520px; width: 100%; height: auto; border-radius: 12px; border: 1px solid #30333A;">
                         </td>
                     </tr>
                     
