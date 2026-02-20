@@ -28,7 +28,8 @@ _Manage your portfolio with live price updates and market data_
 
 ### Mock Portfolio Management
 
-![Portfolio Screenshots](./public/screenshots/portfolio.png)(./public/screenshots/portfolio2.png)
+![Portfolio Screenshot 1](./public/screenshots/portfolio.png)
+![Portfolio Screenshot 2](./public/screenshots/portfolio2.png)
 _Learn and Experiment using the Mock Portfolio feature_
 
 ## 💡 Why This Project?
