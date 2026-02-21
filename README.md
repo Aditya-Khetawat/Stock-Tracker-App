@@ -32,6 +32,11 @@ _Manage your portfolio with live price updates and market data_
 ![Portfolio Screenshot 2](./public/screenshots/portfolio2.png)
 _Learn and Experiment using the Mock Portfolio feature_
 
+### AI Portfolio Analysis
+
+![AI Portfolio Analysis Screenshot](./public/screenshots/ai-analysis.png)
+_On-demand AI analysis with risk assessment, diversification review, and actionable suggestions powered by Gemini 2.5 Flash Lite_
+
 ## 💡 Why This Project?
 
 ### The Problem
@@ -90,6 +95,7 @@ Built as a showcase of modern full-stack development practices, StockLens demons
 - **Quick Sell Button**: Per-row sell action pre-filled with symbol and MAX quantity
 - **P&L Chart**: Recharts line chart showing profit & loss over time via transaction replay
 - **Portfolio Summary**: Total equity, total return ($), total return (%), unrealized P&L, and cash balance
+- **AI Portfolio Intelligence**: One-click AI analysis powered by Gemini — generates a narrative summary, risk analysis, diversification review, and actionable suggestions based on live portfolio metrics
 
 ### ⭐ Watchlist Management
 
@@ -106,6 +112,17 @@ Built as a showcase of modern full-stack development practices, StockLens demons
 - **Daily News Summaries**: Automated market news digests based on watchlist
 - Professional HTML email templates with responsive design
 - Nodemailer integration for reliable delivery
+
+### 🧠 AI Portfolio Intelligence
+
+- **On-demand Analysis**: Single button generates a full AI analysis of your live portfolio
+- **Narrative Summary**: Plain-language overview of your portfolio's current state
+- **Risk Analysis**: Assessment of volatility, Sharpe ratio, and exposure concentration
+- **Diversification Review**: Sector breakdown and allocation health check
+- **Actionable Suggestions**: Concrete next steps to improve portfolio balance and returns
+- **Concentration Risk Badge**: Visual LOW / MEDIUM / HIGH risk indicator derived from largest position weight
+- **Structured Metrics**: Built server-side via `portfolioAnalytics.service.ts` — annualised return, annualised volatility, Sharpe ratio, sector allocations, top gainer / loser, cash allocation %
+- Powered by **Google Gemini 2.5 Flash Lite** via REST API
 
 ### 🤖 Background Jobs
 
@@ -144,7 +161,7 @@ Built as a showcase of modern full-stack development practices, StockLens demons
 - **Authentication**: Better Auth
 - **Email**: Nodemailer
 - **Background Jobs**: Inngest
-- **AI**: Google Gemini 2.5 Flash
+- **AI**: Google Gemini 2.5 Flash Lite — AI portfolio analysis & email content generation
 
 ### APIs & Services
 
@@ -161,7 +178,7 @@ Before you begin, ensure you have:
 - **npm/yarn/pnpm** package manager
 - **Finnhub API Key** (free tier available at [finnhub.io](https://finnhub.io))
 - **SMTP Server** credentials for email (Gmail, SendGrid, etc.)
-- **Google AI API Key** for Gemini (optional, for AI features)
+- **Google Gemini API Key** for Gemini (required for AI portfolio analysis and email features)
 
 ## 🚀 Getting Started
 
@@ -202,8 +219,8 @@ EMAIL_USER=your-email@gmail.com
 EMAIL_PASS=your-app-password
 EMAIL_FROM=StockLens <noreply@stocklens.com>
 
-# Google Gemini AI (Optional)
-GOOGLE_AI_API_KEY=your-gemini-api-key
+# Google Gemini AI (required for AI portfolio analysis & welcome emails)
+GEMINI_API_KEY=your-gemini-api-key
 
 # Inngest
 INNGEST_SIGNING_KEY=your-inngest-key
@@ -253,18 +270,22 @@ stocks-app/
 │   │   ├── inngest/         # Inngest webhook
 │   │   ├── trade/           # Trade execution endpoint
 │   │   └── portfolio/
-│   │       └── equity/      # P&L history endpoint
+│   │       ├── equity/      # P&L history endpoint
+│   │       └── ai-analysis/ # AI portfolio analysis endpoint
 │   ├── globals.css          # Global styles
 │   └── layout.tsx           # Root layout
 ├── components/
 │   ├── forms/               # Form components (InputField, SelectField, etc.)
 │   ├── ui/                  # Shadcn UI primitives
+│   ├── AIPortfolioAnalysis.tsx  # AI analysis card (Gemini-powered)
 │   ├── EquityChart.tsx      # Recharts P&L line chart
 │   ├── Header.tsx
 │   ├── PortfolioTradeButton.tsx
 │   ├── PositionSellButton.tsx
 │   ├── SearchCommand.tsx
 │   ├── TradeModal.tsx       # Buy/sell execution modal
+│   ├── TradingViewWidget.tsx
+│   ├── UserDropdown.tsx
 │   ├── WatchlistButton.tsx
 │   └── WatchlistTable.tsx
 ├── database/
@@ -279,8 +300,9 @@ stocks-app/
 │   ├── inngest/             # Background job functions & prompts
 │   ├── nodemailer/          # Email templates and transport
 │   ├── services/
-│   │   ├── portfolio.service.ts  # Portfolio aggregation with cost basis replay
-│   │   └── trade.service.ts      # Trade execution logic
+│   │   ├── portfolio.service.ts          # Portfolio aggregation with cost basis replay
+│   │   ├── portfolioAnalytics.service.ts # Analytics: volatility, Sharpe, sector, risk
+│   │   └── trade.service.ts              # Trade execution logic
 │   ├── constants.ts
 │   └── utils.ts
 ├── middleware/
@@ -321,6 +343,24 @@ The `/api/portfolio/equity` route replays all transactions sequentially, trackin
 - **Symbol autocomplete**: Debounced `searchStocks` suggestions while typing, shown for both BUY and SELL modes (can be disabled per usage)
 - **Live price fetch**: Debounced 500ms after symbol entry, shows current price and estimated total
 - **MAX button**: In SELL mode, one click fills the quantity with the full number of shares held
+
+### AI Portfolio Analytics Service
+
+`lib/services/portfolioAnalytics.service.ts` computes a structured `PortfolioSnapshot` on demand:
+
+| Metric                   | Description                                                   |
+| ------------------------ | ------------------------------------------------------------- |
+| `totalEquity`            | Cash + total market value of all positions                    |
+| `totalReturnPct`         | Cumulative return since first trade                           |
+| `annualisedReturn`       | Geometrically annualised return (252 trading days)            |
+| `volatility`             | Annualised standard deviation of daily equity returns         |
+| `sharpeRatio`            | `(annualisedReturn − 0.03) / volatility`                      |
+| `sectorBreakdown`        | Per-sector allocation % (denominator: `totalEquity`)          |
+| `concentrationRiskLevel` | `HIGH` (>40%), `MEDIUM` (>20%), or `LOW` for largest position |
+| `topGainer` / `topLoser` | Best and worst performing positions by unrealised %           |
+| `cashAllocationPct`      | Cash as a % of total equity                                   |
+
+The snapshot is passed to `app/api/portfolio/ai-analysis/route.ts`, which constructs a structured prompt and calls **Gemini 2.5 Flash Lite** with `responseMimeType: "application/json"`. The response is validated and returned to the `AIPortfolioAnalysis` client component.
 
 ### Authentication Flow
 
@@ -423,6 +463,8 @@ Future enhancements planned for StockLens:
 
 ### Analytics & Intelligence
 
+- [x] **AI Portfolio Analysis**: On-demand narrative risk/diversification analysis powered by Gemini 2.5 Flash Lite
+- [x] **Portfolio Metrics**: Annualised return, volatility (σ), Sharpe ratio, sector allocation, concentration risk
 - [ ] **AI-Powered Predictions**: Machine learning price trend forecasts
 - [ ] **Sentiment Analysis**: News sentiment scoring and tracking
 - [ ] **Portfolio Recommendations**: AI-suggested stock additions based on goals
