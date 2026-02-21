@@ -138,7 +138,7 @@ export default function AIPortfolioAnalysis() {
           <Card className="bg-gray-800 border-gray-600 shadow-sm hover:shadow-md transition-all duration-300 rounded-lg">
             <CardHeader className="pb-4 border-b border-gray-600">
               <CardTitle className="text-base font-semibold tracking-tight text-gray-100">
-                AI Portfolio Intelligence
+                🧠AI Portfolio Intelligence
               </CardTitle>
               <CardDescription className="text-xs text-gray-400">
                 Narrative analysis generated from structured portfolio metrics.
